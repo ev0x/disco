@@ -1,5 +1,6 @@
 import six
 import types
+import yaml
 
 
 class Serializer(object):
@@ -32,7 +33,7 @@ class Serializer(object):
     @classmethod
     def loads(cls, fmt, raw):
         loads, _ = getattr(cls, fmt)()
-        return loads(raw, Loader=FullLoader)
+        return loads(raw, yaml.Loader=FullLoader)
 
     @classmethod
     def dumps(cls, fmt, raw):
