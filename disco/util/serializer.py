@@ -33,7 +33,7 @@ class Serializer(object):
     @classmethod
     def loads(cls, fmt, raw):
         loads, _ = getattr(cls, fmt)()
-        return loads(raw, yaml.Loader=FullLoader)
+        return loads(raw, Loader=yaml.FullLoader)
 
     @classmethod
     def dumps(cls, fmt, raw):
