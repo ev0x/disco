@@ -139,7 +139,7 @@ class State(object):
 
         for event in self.EVENTS:
             func = 'on_' + underscore(event)
-            self.listeners.append(self.client.events.on(event, getattr(self, func), priority=Priority.BEFORE))
+            self.listeners.append(self.client.events.on(event, getattr(self, func), priority=Priority.NONE))
 
     def fill_messages(self, channel):
         for message in reversed(next(channel.messages_iter(bulk=True))):
