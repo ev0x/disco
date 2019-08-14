@@ -115,10 +115,16 @@ class Channel(SlottedModel, Permissible):
         The channel's user limit.
     recipients: list(:class:`disco.types.user.User`)
         Members of this channel (if this is a DM channel).
+    nsfw : bool
+        Whether this channel is an NSFW channel.
     type : :const:`ChannelType`
         The type of this channel.
     overwrites : dict(snowflake, :class:`disco.types.channel.PermissionOverwrite`)
         Channel permissions overwrites.
+    parent_id : snowflake
+        The parent's channel ID.
+    rate_limit_per_user : int
+        The channel's rate limit per user.
     """
     id = Field(snowflake)
     guild_id = Field(snowflake)
@@ -133,6 +139,7 @@ class Channel(SlottedModel, Permissible):
     type = Field(enum(ChannelType))
     overwrites = AutoDictField(PermissionOverwrite, 'id', alias='permission_overwrites')
     parent_id = Field(snowflake)
+    rate_limit_per_user = Field(int)
 
     def __init__(self, *args, **kwargs):
         super(Channel, self).__init__(*args, **kwargs)
@@ -476,6 +483,13 @@ class Channel(SlottedModel, Permissible):
             self.id,
             parent_id=to_snowflake(parent) if parent else parent,
             reason=reason)
+
+    def set_rate_limit_per_user(self, value, reason=None):
+        """
+        Sets the channel's rate limit per user.
+        """
+        assert (self.type == ChannelType.GUILD_TEXT)
+        return self.client.api.channels_modify(self.id, rate_limit_per_user=value, reason=reason)
 
     def create_text_channel(self, *args, **kwargs):
         """

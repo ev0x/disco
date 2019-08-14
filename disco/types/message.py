@@ -24,7 +24,17 @@ MessageType = Enum(
     CHANNEL_ICON_CHANGE=5,
     PINS_ADD=6,
     GUILD_MEMBER_JOIN=7,
+    GUILD_MEMBER_SUBSCRIBE=8,
+    GUILD_MEMBER_SUBSCRIBE_TIER_1=9,
+    GUILD_MEMBER_SUBSCRIBE_TIER_2=10,
+    GUILD_MEMBER_SUBSCRIBE_TIER_3=11,
 )
+
+class MessageActivityType(object):
+    JOIN = 1
+    SPECTATE = 2
+    LISTEN = 3
+    JOIN_REQUEST = 5
 
 
 class Emoji(SlottedModel):
@@ -82,6 +92,43 @@ class MessageReaction(SlottedModel):
     emoji = Field(MessageReactionEmoji)
     count = Field(int)
     me = Field(bool)
+
+
+class MessageApplication(SlottedModel):
+    """
+    The application of a Rich Presence-related chat embed.
+    Attributes
+    ----------
+    id : snowflake
+        The id of the application.
+    cover_image : str
+        The id of the embed's image asset.
+    description : str
+        The application's description.
+    icon : str
+        The id of the application's icon.
+    name : str
+        The name of the application.
+    """
+    id = Field(snowflake)
+    cover_image = Field(text)
+    description = Field(text)
+    icon = Field(text)
+    name = Field(text)
+
+
+class MessageActivity(SlottedModel):
+    """
+    The activity of a Rich Presence-related chat embed.
+    Attributes
+    ----------
+    type : `MessageActivityType`
+        The type of message activity.
+    party_id : str
+        The party id from a Rich Presence event.
+    """
+    type = Field(enum(MessageActivityType))
+    party_id = Field(text)
 
 
 class MessageEmbedFooter(SlottedModel):
@@ -350,6 +397,10 @@ class Message(SlottedModel):
         Attachments for this message.
     reactions : list[`MessageReaction`]
         Reactions for this message.
+    activity : `MessageActivity`
+        The activity of a Rich Presence-related chat embed.
+    application : `MessageApplication`
+        The application of a Rich Presence-related chat embed.
     """
     id = Field(snowflake)
     channel_id = Field(snowflake)
@@ -368,6 +419,8 @@ class Message(SlottedModel):
     embeds = ListField(MessageEmbed)
     attachments = AutoDictField(MessageAttachment, 'id')
     reactions = ListField(MessageReaction)
+    activity = Field(MessageActivity)
+    application = Field(MessageApplication)
 
     def __str__(self):
         return '<Message {} ({})>'.format(self.id, self.channel_id)
@@ -401,6 +454,13 @@ class Message(SlottedModel):
             The channel this message was created in.
         """
         return self.client.state.channels.get(self.channel_id)
+
+    @cached_property
+    def url(self):
+        """
+        Returns the URL to jump to the message
+        """
+        return 'https://discordapp.com/channels/{}/{}/{}'.format(self.guild.id if self.guild else '@me', self.channel_id, self.id)
 
     def pin(self):
         """
