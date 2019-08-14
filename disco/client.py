@@ -1,14 +1,13 @@
 import time
 import gevent
 
-from holster.emitter import Emitter
-
 from disco.state import State, StateConfig
 from disco.api.client import APIClient
 from disco.gateway.client import GatewayClient
 from disco.gateway.packets import OPCode
 from disco.types.user import Status, Game
 from disco.util.config import Config
+from disco.util.emitter import Emitter
 from disco.util.logging import LoggingClass
 from disco.util.backdoor import DiscoBackdoorServer
 
@@ -16,7 +15,6 @@ from disco.util.backdoor import DiscoBackdoorServer
 class ClientConfig(Config):
     """
     Configuration for the `Client`.
-
     Attributes
     ----------
     token : str
@@ -58,12 +56,10 @@ class Client(LoggingClass):
     implementation cases. This class wraps the functionality of both the REST API
     (`disco.api.client.APIClient`) and the realtime gateway API
     (`disco.gateway.client.GatewayClient`).
-
     Parameters
     ----------
     config : `ClientConfig`
         Configuration for this client instance.
-
     Attributes
     ----------
     config : `ClientConfig`
@@ -111,7 +107,6 @@ class Client(LoggingClass):
     def update_presence(self, status, game=None, afk=False, since=0.0):
         """
         Updates the current clients presence.
-
         Params
         ------
         status : `user.Status`
@@ -132,7 +127,7 @@ class Client(LoggingClass):
         payload = {
             'afk': afk,
             'since': since,
-            'status': status.value.lower(),
+            'status': status.lower(),
             'game': None,
         }
 
