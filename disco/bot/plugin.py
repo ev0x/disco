@@ -7,8 +7,8 @@ import warnings
 import functools
 
 from gevent.event import AsyncResult
-from holster.emitter import Priority
 
+from disco.util.emitter import Priority
 from disco.util.logging import LoggingClass
 from disco.bot.command import Command, CommandError
 
@@ -24,7 +24,6 @@ def register_plugin_base_class(cls):
     This function registers the given class under an internal registry of plugin
     base classes. This will cause the class passed to behave exactly like the
     builtin `Plugin` class.
-
     This is particularly useful if you wish to subclass `Plugin` to create a new
     base class that other plugins in your project inherit from, but do not want
     the automatic plugin loading to consider the class for loading.
@@ -66,7 +65,7 @@ def find_loadable_plugins(mod):
 class BasePluginDeco(object):
     Prio = Priority
 
-    # TODO: dont smash class methods
+    # TODO: don't smash class methods
     @classmethod
     def add_meta_deco(cls, meta):
         def deco(f):
@@ -206,14 +205,12 @@ class PluginDeco(BasePluginDeco):
 class Plugin(LoggingClass, PluginDeco):
     """
     A plugin is a set of listeners/commands which can be loaded/unloaded by a bot.
-
     Parameters
     ----------
     bot : :class:`disco.bot.Bot`
         The bot this plugin is a member of.
     config : any
         The configuration data for this plugin.
-
     Attributes
     ----------
     client : :class:`disco.client.Client`
@@ -234,7 +231,7 @@ class Plugin(LoggingClass, PluginDeco):
         self.storage = bot.storage
         self.config = config
 
-        # General declartions
+        # General declarations
         self.listeners = []
         self.commands = []
         self.schedules = {}
@@ -394,7 +391,6 @@ class Plugin(LoggingClass, PluginDeco):
     def register_listener(self, func, what, *args, **kwargs):
         """
         Registers a listener.
-
         Parameters
         ----------
         what : str
@@ -418,7 +414,6 @@ class Plugin(LoggingClass, PluginDeco):
     def register_command(self, func, *args, **kwargs):
         """
         Registers a command.
-
         Parameters
         ----------
         func : function
@@ -435,7 +430,6 @@ class Plugin(LoggingClass, PluginDeco):
         """
         Registers a function to be called repeatedly, waiting for an interval
         duration.
-
         Args
         ----
         func : function
@@ -445,7 +439,7 @@ class Plugin(LoggingClass, PluginDeco):
         repeat : bool
             Whether this schedule is repeating (or one time).
         init : bool
-            Whether to run this schedule once immediatly, or wait for the first
+            Whether to run this schedule once immediately, or wait for the first
             scheduled iteration.
         kwargs: dict
             kwargs which will be passed to executed `func`
