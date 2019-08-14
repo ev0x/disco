@@ -1,8 +1,6 @@
 import re
 import argparse
 
-from holster.enum import Enum
-
 from six import integer_types
 
 from disco.bot.parser import ArgumentSet, ArgumentError
