@@ -3,11 +3,11 @@ import gevent
 import inspect
 import functools
 
-from holster.enum import BaseEnumMeta, EnumAttr
 from datetime import datetime as real_datetime
 
 from disco.util.chains import Chainable
 from disco.util.hashmap import HashMap
+from disco.util.enum import get_enum_members
 
 DATETIME_FORMATS = [
     '%Y-%m-%dT%H:%M:%S.%f',
@@ -109,10 +109,10 @@ class Field(object):
     def type_to_deserializer(typ):
         if isinstance(typ, Field) or inspect.isclass(typ) and issubclass(typ, Model):
             return typ
-        elif isinstance(typ, BaseEnumMeta):
-            def _f(raw, client, **kwargs):
-                return typ.get(raw)
-            return _f
+        # elif isinstance(typ, BaseEnumMeta):
+        #    def _f(raw, client, **kwargs):
+        #        return typ.get(raw)
+        #    return _f
         elif typ is None:
             def _f(*args, **kwargs):
                 return None
@@ -123,9 +123,7 @@ class Field(object):
 
     @staticmethod
     def serialize(value, inst=None):
-        if isinstance(value, EnumAttr):
-            return value.value
-        elif isinstance(value, Model):
+        if isinstance(value, Model):
             return value.to_dict(ignore=(inst.ignore_dump if inst else []))
         else:
             if inst and inst.cast:
@@ -196,9 +194,16 @@ def snowflake(data):
 
 def enum(typ):
     def _f(data):
-        if isinstance(data, str):
-            data = data.lower()
-        return typ.get(data) if data is not None else None
+        if data is None:
+            return None
+
+        for k, v in get_enum_members(typ):
+            if isinstance(data, six.string_types) and k == data.upper():
+                return v
+            elif k == data or v == data:
+                return v
+
+        return None
     return _f
 
 
@@ -381,7 +386,7 @@ class Model(six.with_metaclass(ModelMeta, Chainable)):
             if ignore and name in ignore:
                 continue
 
-            if getattr(self, name) == UNSET:
+            if getattr(self, name) is UNSET:
                 continue
             obj[name] = field.serialize(getattr(self, name), field)
         return obj

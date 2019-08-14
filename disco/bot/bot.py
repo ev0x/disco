@@ -6,7 +6,6 @@ import inspect
 import importlib
 
 from six.moves import reload_module
-from holster.threadlocal import ThreadLocal
 from gevent.pywsgi import WSGIServer
 
 from disco.types.guild import GuildMember
@@ -16,13 +15,14 @@ from disco.bot.storage import Storage
 from disco.util.config import Config
 from disco.util.logging import LoggingClass
 from disco.util.serializer import Serializer
+from disco.util.threadlocal import ThreadLocal
+from disco.util.enum import get_enum_value_by_name
 
 
 class BotConfig(Config):
     """
     An object which is used to configure and define the runtime configuration for
     a bot.
-
     Attributes
     ----------
     levels : dict(snowflake, str)
@@ -52,7 +52,7 @@ class BotConfig(Config):
     commands_level_getter : function
         If set, a function which when given a GuildMember or User, returns the
         relevant :class:`disco.bot.commands.CommandLevels`.
-    commands_group_abbrev : function
+    commands_group_abbrev : bool
         If true, command groups may be abbreviated to the least common variation.
         E.g. the grouping 'test' may be abbreviated down to 't', unless 'tag' exists,
         in which case it may be abbreviated down to 'te'.
@@ -109,7 +109,6 @@ class Bot(LoggingClass):
     """
     Disco's implementation of a simple but extendable Discord bot. Bots consist
     of a set of plugins, and a Disco client.
-
     Parameters
     ----------
     client : :class:`disco.client.Client`
@@ -117,7 +116,6 @@ class Bot(LoggingClass):
     config : Optional[:class:`BotConfig`]
         The configuration to use for this bot. If not provided will use the defaults
         inside of :class:`BotConfig`.
-
     Attributes
     ----------
     client : `disco.client.Client`
@@ -185,9 +183,14 @@ class Bot(LoggingClass):
         for plugin_mod in self.config.plugins:
             self.add_plugin_module(plugin_mod)
 
-        # Convert level mapping
-        for k, v in list(six.iteritems(self.config.levels)):
-            self.config.levels[int(k) if k.isdigit() else k] = CommandLevels.get(v)
+        # Convert our configured mapping of entities to levels into something
+        #  we can actually use. This ensures IDs are converted properly, and maps
+        #  any level names (e.g. `role_id: admin`) map to their numerical values.
+        for entity_id, level in list(six.iteritems(self.config.levels)):
+            del self.config.levels[entity_id]
+            entity_id = int(entity_id) if str(entity_id).isdigit() else entity_id
+            level = int(level) if str(level).isdigit() else get_enum_value_by_name(CommandLevels, level)
+            self.config.levels[entity_id] = level
 
     @classmethod
     def from_cli(cls, *plugins):
@@ -195,12 +198,10 @@ class Bot(LoggingClass):
         Creates a new instance of the bot using the utilities inside of the
         :mod:`disco.cli` module. Allows passing in a set of uninitialized
         plugin classes to load.
-
         Parameters
         ---------
         plugins : Optional[list(:class:`disco.bot.plugin.Plugin`)]
             Any plugins to load after creating the new bot instance
-
         """
         from disco.cli import disco_main
         inst = cls(disco_main())
@@ -274,12 +275,10 @@ class Bot(LoggingClass):
         """
         Generator of all commands that a given message object triggers, based on
         the bots plugins and configuration.
-
         Parameters
         ---------
         msg : :class:`disco.types.message.Message`
             The message object to parse and find matching commands for
-
         Yields
         -------
         tuple(:class:`disco.bot.command.Command`, `re.MatchObject`)
@@ -367,12 +366,10 @@ class Bot(LoggingClass):
         """
         Attempts to handle a newly created or edited message in the context of
         command parsing/triggering. Calls all relevant commands the message triggers.
-
         Parameters
         ---------
         msg : :class:`disco.types.message.Message`
             The newly created or updated message object to parse/handle.
-
         Returns
         -------
         bool
@@ -428,7 +425,6 @@ class Bot(LoggingClass):
     def add_plugin(self, inst, config=None, ctx=None):
         """
         Adds and loads a plugin, based on its class.
-
         Parameters
         ----------
         inst : subclass (or instance therein) of `disco.bot.plugin.Plugin`
@@ -460,7 +456,6 @@ class Bot(LoggingClass):
     def rmv_plugin(self, cls):
         """
         Unloads and removes a plugin based on its class.
-
         Parameters
         ----------
         cls : subclass of :class:`disco.bot.plugin.Plugin`
