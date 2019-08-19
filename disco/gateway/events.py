@@ -144,12 +144,14 @@ class Ready(GatewayEvent):
     user = Field(User)
     guilds = ListField(Guild)
     private_channels = ListField(Channel)
+    trace = ListField(str, alias='_tracing')
 
 
 class Resumed(GatewayEvent):
     """
     Sent after a resume completes.
     """
+    trace = ListField(str, alias='_tracing')
 
 
 @wraps_model(Guild)
